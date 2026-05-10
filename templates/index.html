@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mifos Pocket Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="nav-brand">
+        <div class="nav-logo">M</div>
+        <span>Mifos Pay</span>
+    </div>
+    <div class="nav-user">
+        <div class="avatar">JD</div>
+        <span>John Doe</span>
+    </div>
+</nav>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Budget Alert Banner -->
+<div id="budgetAlertBanner" style="display:none; background:#FFEBEE; border-left:4px solid #E53935; padding:12px 32px; font-size:14px; color:#C62828;">
+    <strong>⚠️ Budget Alert:</strong> <span id="budgetAlertText"></span>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h1>My Pocket</h1>
+            <p>Manage your linked financial accounts</p>
+        </div>
+        <!-- <button class="btn-primary" onclick="openLinkModal()">+ Link Account</button> -->
+        <div style="display:flex; gap:10px; align-items:center;">
+            <select id="currencySelect" onchange="changeCurrency(this.value)" style="padding:8px 14px; border-radius:10px; border:1.5px solid #ddd; font-family:'Inter',sans-serif; font-size:14px; cursor:pointer; background:white; color:#333;">
+                <option value="USD">🇺🇸 USD</option>
+                <option value="INR">🇮🇳 INR</option>
+                <option value="EUR">🇪🇺 EUR</option>
+                <option value="GBP">🇬🇧 GBP</option>
+                <option value="BDT">🇧🇩 BDT</option>
+            </select>
+            <button class="btn-primary" onclick="openLinkModal()">+ Link Account</button>
+        </div>
+    </div>
+
+    <!-- Balance Summary Card -->
+    <div class="balance-card">
+        <div class="balance-main">
+            <p class="balance-label">Total Assets</p>
+            <h2 class="balance-amount" id="totalAssets">$0.00</h2>
+            <p class="balance-sub" id="accountCount">0 accounts linked</p>
+        </div>
+        <div class="balance-breakdown">
+            <div class="breakdown-item">
+                <div class="breakdown-dot savings"></div>
+                <div>
+                    <p class="breakdown-label">Savings</p>
+                    <p class="breakdown-value" id="savingsTotal">$0.00</p>
+                </div>
+            </div>
+            <div class="breakdown-item">
+                <div class="breakdown-dot loans"></div>
+                <div>
+                    <p class="breakdown-label">Loans (Owed)</p>
+                    <p class="breakdown-value" id="loansTotal">$0.00</p>
+                </div>
+            </div>
+            <div class="breakdown-item">
+                <div class="breakdown-dot shares"></div>
+                <div>
+                    <p class="breakdown-label">Shares</p>
+                    <p class="breakdown-value" id="sharesTotal">$0.00</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Net Worth Card -->
+    <div class="networth-card">
+        <div class="networth-section assets">
+            <p class="nw-label">Total Assets</p>
+            <p class="nw-amount" id="nwAssets">$0.00</p>
+            <div class="nw-sub">
+                <span>Savings: <b id="nwSavings">$0</b></span>
+                <span>Shares: <b id="nwShares">$0</b></span>
+            </div>
+        </div>
+        <div class="networth-divider">
+            <div class="nw-minus">−</div>
+        </div>
+        <div class="networth-section liabilities">
+            <p class="nw-label">Total Liabilities</p>
+            <p class="nw-amount" id="nwLiabilities">$0.00</p>
+            <div class="nw-sub">
+                <span>Loans: <b id="nwLoans">$0</b></span>
+            </div>
+        </div>
+        <div class="networth-divider">
+            <div class="nw-equals">=</div>
+        </div>
+        <div class="networth-section networth">
+            <p class="nw-label">Net Worth</p>
+            <p class="nw-amount" id="nwTotal">$0.00</p>
+            <p class="nw-badge" id="nwBadge">Calculating...</p>
+        </div>
+    </div>
+
+    <!-- Analytics Chart -->
+    <div class="analytics-card">
+        <div class="analytics-header">
+            <h3>Portfolio Breakdown</h3>
+            <span class="analytics-sub" id="analyticsTotal">$0.00 total</span>
+        </div>
+        <div class="chart-bars" id="chartBars"></div>
+        <div class="chart-legend" id="chartLegend"></div>
+    </div>
+
+    <!-- Filter Chips -->
+    <div class="filters">
+        <button class="chip active" onclick="filterAccounts('all', this)">All</button>
+        <button class="chip" onclick="filterAccounts('savings', this)">Savings</button>
+        <button class="chip" onclick="filterAccounts('loans', this)">Loans</button>
+        <button class="chip" onclick="filterAccounts('shares', this)">Shares</button>
+    </div>
+
+    <!-- Accounts Section -->
+    <div class="section-header">
+        <h3 id="sectionTitle">Linked Accounts</h3>
+        <span class="badge" id="accountBadge">0</span>
+    </div>
+
+    <!-- Account Cards -->
+    <div class="accounts-grid" id="accountsGrid">
+        <div class="loading">Loading accounts...</div>
+    </div>
+
+</div>
+
+<!-- Account Detail Modal -->
+<div class="modal-overlay" id="detailModal" onclick="closeModal('detailModal')">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header" id="detailModalHeader">
+            <h2 id="detailProductName">Account Detail</h2>
+            <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-balance-hero" id="detailBalanceHero">
+                <p>Current Balance</p>
+                <h2 id="detailBalance">$0.00</h2>
+                <span id="detailCurrency">USD</span>
+            </div>
+
+            <!-- Tabs -->
+            <div class="detail-tabs">
+                <button class="detail-tab active" onclick="switchTab('details', this)">Details</button>
+                <button class="detail-tab" onclick="switchTab('transactions', this)">Transactions</button>
+            </div>
+
+            <!-- Details Tab -->
+            <div id="tabDetails">
+                <div class="detail-rows">
+                    <div class="detail-row"><span>Account Number</span><strong id="detailAccNo">-</strong></div>
+                    <div class="detail-row"><span>Account Type</span><strong id="detailType">-</strong></div>
+                    <div class="detail-row"><span>Product</span><strong id="detailProduct">-</strong></div>
+                    <div class="detail-row"><span>Status</span><strong id="detailStatus" class="status-active">-</strong></div>
+                    <div class="detail-row"><span>Currency</span><strong id="detailCurrencyRow">-</strong></div>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn-primary" style="width:100%">View Full Statement</button>
+                </div>
+                <!-- Budget Limit Setter -->
+                <div style="margin-top:16px; padding-top:16px; border-top:1px solid #f0f0f0;">
+                    <p style="font-size:13px; color:#888; margin-bottom:8px;">Set Budget Limit for this account</p>
+                    <div style="display:flex; gap:8px;">
+                        <input type="number" id="budgetInput" placeholder="Enter limit amount" 
+                               style="flex:1; padding:8px 12px; border:1.5px solid #ddd; border-radius:8px; font-family:'Inter',sans-serif; font-size:13px;">
+                        <button class="btn-primary" onclick="setBudget()">Set</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Tab -->
+            <div id="tabTransactions" style="display:none;">
+                <div id="transactionsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Link Account Modal -->
+<div class="modal-overlay" id="linkModal" onclick="closeModal('linkModal')">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Link an Account</h2>
+            <button class="modal-close" onclick="closeModal('linkModal')">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="color:#666; margin-bottom:16px;">Select an account to add to your Pocket</p>
+            <div id="unlinkAccountsList"></div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/main.js"></script>
+</body>
+</html>
